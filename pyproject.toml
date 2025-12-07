@@ -1,0 +1,12 @@
+[project]
+name = "heartdiseaseuci"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "kagglehub>=0.3.13",
+    "matplotlib>=3.10.7",
+    "pandas>=2.3.3",
+    "scikit-learn>=1.7.2",
+    "xgboost>=3.1.2",
+]

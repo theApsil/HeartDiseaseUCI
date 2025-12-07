@@ -1,10 +1,11 @@
 import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report
-from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 
 df = pd.read_csv("data/heart_disease_uci.csv")
 df = df.replace({"TRUE": 1, "FALSE": 0})
@@ -18,22 +19,24 @@ numeric_cols = X.select_dtypes(exclude=["object"]).columns
 
 preprocess = ColumnTransformer(
     transformers=[
-        ("num", StandardScaler(), numeric_cols),
-        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols)
+        ("num", Pipeline([
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler())
+        ]), numeric_cols),
+
+        ("cat", Pipeline([
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore"))
+        ]), categorical_cols)
     ]
 )
 
 model = Pipeline(steps=[
     ("preprocess", preprocess),
-    ("clf", XGBClassifier(
-        objective="multi:softprob",
-        num_class=len(y.unique()),
-        learning_rate=0.05,
-        max_depth=5,
-        n_estimators=500,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        eval_metric="mlogloss"
+    ("clf", LogisticRegression(
+        max_iter=2000,
+        multi_class="multinomial",
+        solver="lbfgs"
     ))
 ])
 
@@ -44,5 +47,5 @@ X_train, X_test, y_train, y_test = train_test_split(
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
-print("XGBoost Results:")
+print("Logistic Regression Results:")
 print(classification_report(y_test, y_pred))
